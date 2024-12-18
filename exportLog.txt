@@ -1,0 +1,74 @@
+Exporting all
+
+
+	====================	Exporting Developer Data	====================
+Saving all Developers data
+
+
+	====================	Exporting App Data	====================
+Saving all Apps data
+
+
+	====================	Exporting Product Data	====================
+Saving all Products data
+
+
+	====================	Exporting Caches Data	====================
+Saving all Caches data for environment: dev
+	-- Saving Caches: testCacheContainer
+
+
+	====================	Exporting Flowhooks Data	====================
+Saving all FlowHooks data for environment: dev
+	-- Saving FlowHooks: PreProxyFlowHook
+	-- Saving FlowHooks: PostProxyFlowHook
+	-- Saving FlowHooks: PreTargetFlowHook
+	-- Saving FlowHooks: PostTargetFlowHook
+
+
+	====================	Exporting KVM Data	====================
+Saving all KVM data for environment: dev
+	-- Saving KVM: notEnc
+	-- Saving KVM: test
+
+
+	====================	Exporting References Data	====================
+Saving all References data for environment: dev
+	-- Saving References: testRega
+
+
+	====================	Exporting Target Server Data	====================
+Saving all TargetServer data for environment: dev
+	-- Saving TargetServer: test
+
+
+	====================	Exporting TLSKEyStore Data	====================
+Saving all TLSKEyStore data for environment: dev
+	-- Saving TLSKEyStore: testRega
+	====================	Exporting proxies Data	====================
+Saving all deployments data
+Saving all proxies data
+Downloading all proxies
+	 -- Saving Proxy: empty2 Revision: 2
+	 -- Saving Proxy: empty2 Revision: 1
+	 -- Saving Proxy: emptyProxy Revision: 1
+	 -- Saving Proxy: passThrough Revision: 1
+Saving Proxy-Deployment-Map
+Downloading only deployed revisions
+	 -- Saving Proxy: passThrough Revision: 1
+	 -- Saving Proxy: empty2 Revision: 2
+	 -- Saving Proxy: emptyProxy Revision: 1
+
+
+	====================	Exporting Shared Flows Data	====================
+Saving all shared flows data
+Saving all deployments data
+Downloading all shared flows
+	-- Saving Shared Flow: Shared-Flow-FH Revision: 2
+	-- Saving Shared Flow: Shared-Flow-FH Revision: 1
+	-- Saving Shared Flow: Shared-Flow-Test Revision: 1
+Saving shared flows deployment map
+Downloading only deployed revisions
+	-- Saving Shared Flow: Shared-Flow-Test Revision: 1
+	-- Saving Shared Flow: Shared-Flow-FH Revision: 1
+Done

@@ -9,6 +9,14 @@ readonly class StoragePaths
     {
     }
 
+    private function validatePath(string $path = ''): void
+    {
+        $dirPath = dirname($path);
+        if (!is_dir($dirPath)) {
+            mkdir($dirPath, 0777, true);
+        }
+    }
+
     public function proxiesFilesPath(string $proxyName = null, $proxyRevision = null, bool $deployedFolder = false): string
     {
         $folderPath = $this->exportedDataPath('proxies/files');
@@ -22,9 +30,9 @@ readonly class StoragePaths
         return $fullPath . '/' . $proxyBundleName;
     }
 
-    public function proxiesDataPath(): string
+    public function proxiesDataPath($fileName = 'proxies.json'): string
     {
-        $path = $this->exportedDataPath('proxies/data/proxies.json');
+        $path = $this->exportedDataPath('proxies/data/' . $fileName);
         $this->validatePath($path);
         return $path;
     }
@@ -43,12 +51,64 @@ readonly class StoragePaths
         return $fullPath;
     }
 
-    private function validatePath(string $path = ''): void
+
+    public function sharedFlowsFilesPath(string $sharedFlowName = null, $sharedFlowRevision = null, bool $deployedFolder = false): string
     {
-        $dirPath = dirname($path);
-        if (!is_dir($dirPath)) {
-            mkdir($dirPath, 0777, true);
-        }
+        $folderPath = $this->exportedDataPath('sharedFlows/files');
+        if (empty($sharedFlowName)) return $folderPath;
+
+        $sharedFlowBundleName = $sharedFlowName . '_revision_' . ($sharedFlowRevision ?? '') . '.zip';
+
+        $fullPath = $folderPath . '/' . ($deployedFolder ? "deployed_sharedFlows/$sharedFlowName" : $sharedFlowName);
+
+        $this->validatePath($fullPath . '/' . $sharedFlowBundleName);
+        return $fullPath . '/' . $sharedFlowBundleName;
+    }
+
+    public function sharedFlowsDataPath($fileName = 'sharedFlows.json'): string
+    {
+        $path = $this->exportedDataPath('sharedFlows/data/' . $fileName);
+        $this->validatePath($path);
+        return $path;
+    }
+
+    public function sharedFlowDeploymentsDataPath(): string
+    {
+        $path = $this->exportedDataPath('sharedFlows/data/deployments.json');
+        $this->validatePath($path);
+        return $path;
+    }
+
+
+    public function cacheDataPath($envName, $fileName = 'caches.json'): string
+    {
+        $path = $this->exportedDataPath("Caches/data/$envName-$fileName");
+        $this->validatePath($path);
+        return $path;
+    }
+
+
+    public function FlowHookDataPath($envName, $fileName = 'flowhook.json'): string
+    {
+        $path = $this->exportedDataPath("Flowhooks/data/$envName-$fileName");
+        $this->validatePath($path);
+        return $path;
+    }
+
+    public function KVMDataPath($envName, $fileName = 'KVM.json'): string
+    {
+        $path = $this->exportedDataPath("KVM/data/$envName-$fileName");
+        $this->validatePath($path);
+        return $path;
+    }
+
+    public function genericDataPath($module, $envName = null, $fileName = null): string
+    {
+        $fileName ??= "$module.json";
+        $envName = is_null($envName) ? '' : $envName . '-';
+        $path = $this->exportedDataPath("$module/data/$envName$fileName");
+        $this->validatePath($path);
+        return $path;
     }
 
 }

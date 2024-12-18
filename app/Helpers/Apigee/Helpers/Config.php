@@ -12,6 +12,7 @@ class Config
     public string $password;
     public ?string $environment;
     public ?string $exportFolder;
+    public ?string $serverName;
 
     public function __construct(private readonly ConfigEnum $configEnum)
     {
@@ -21,6 +22,17 @@ class Config
         $this->password = $this->configs[$this->configEnum->value]['passwd'];
         $this->organization = $this->configs[$this->configEnum->value]['org'];
         $this->environment = $this->configs[$this->configEnum->value]['env'];
-        $this->exportFolder = app_path('Helpers/Apigee/ExportedData');
+        $this->serverName = $this->configs[$this->configEnum->value]['serverName'] ?? 'server';
+        $this->exportFolder = app_path('Helpers/Apigee/ExportedData') . '/' . $this->serverName . "-" . date('Y-m-d-H-i-s');
+    }
+
+    public static Config $SingletonInstance;
+
+    public static function getInstance(ConfigEnum $configEnum): Config
+    {
+        if (!isset(self::$SingletonInstance)) {
+            self::$SingletonInstance = new Config($configEnum);
+        }
+        return self::$SingletonInstance;
     }
 }

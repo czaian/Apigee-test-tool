@@ -1,26 +1,22 @@
 <?php
 
-namespace App\Helpers\Apigee\Proxies;
+namespace App\Helpers\Apigee\Services;
 
 use App\Helpers\Apigee\Clients\ProxyClient;
-use App\Helpers\Apigee\Helpers\Config;
 use App\Helpers\Apigee\Helpers\ConfigEnum;
 use App\Helpers\Apigee\Helpers\ServiceAbstract;
-use App\Helpers\Apigee\Helpers\StoragePaths;
 
 class ProxyService extends ServiceAbstract
 {
-    private ProxyClient $proxyClient;
-    private StoragePaths $storage;
+    protected ProxyClient $proxyClient;
 
     public function __construct(ConfigEnum $configKey = ConfigEnum::ConfigOriginKey)
     {
-        $config = new Config($configKey);
-        $this->storage = new StoragePaths($config);
-        $this->proxyClient = new ProxyClient($config);
+        parent::__construct(ConfigEnum::ConfigOriginKey);
+        $this->proxyClient = new ProxyClient($this->config);
     }
 
-    public function listProxies(?int $count = null, ?string $startKey = null, bool $includeRevisions = true, bool $includeMetaData = true)
+    public function list(?int $count = null, ?string $startKey = null, bool $includeRevisions = true, bool $includeMetaData = true)
     {
         return $this->proxyClient->list($count, $startKey, $includeRevisions, $includeMetaData);
     }
@@ -30,9 +26,10 @@ class ProxyService extends ServiceAbstract
         return $this->proxyClient->get($proxyName, $revision);
     }
 
-    public function exportProxiesData()
+    public function exportData()
     {
-        $proxies = $this->listProxies();
+        $proxies = $this->list();
+        self::commandLog('Saving all proxies data', 'comment');
         file_put_contents($this->storage->proxiesDataPath(), json_encode($proxies, JSON_PRETTY_PRINT));
         return $proxies;
     }
@@ -42,46 +39,45 @@ class ProxyService extends ServiceAbstract
         return $this->proxyClient->listDeployments($includeServerStatus, $includeApiConfig);
     }
 
-    public function exportProxyDeployments()
+    public function exportDeployments()
     {
         $deployments = $this->listDeployments();
         $deploymentsDataPath = $this->storage->proxyDeploymentsDataPath();
+        self::commandLog('Saving all deployments data', 'comment');
         file_put_contents($deploymentsDataPath, json_encode($deployments, JSON_PRETTY_PRINT));
         return $deployments;
     }
 
 
-    public function downloadProxyRevision(string $proxyName, int $revisionNumber, $deployedFolder = false): void
+    public function downloadRevision(string $proxyName, int $revisionNumber, $deployedFolder = false): void
     {
         $proxyRevision = $this->proxyClient->download($proxyName, $revisionNumber);
+        self::commandLog("\t -- Saving Proxy: $proxyName Revision: $revisionNumber");
         file_put_contents($this->storage->proxiesFilesPath($proxyName, $revisionNumber, $deployedFolder), $proxyRevision);
     }
 
 
-    public function downloadAllProxies($allRevisions = false): void
+    public function downloadAll($allRevisions = true): void
     {
-        $proxies = $this->listProxies();
+        $proxies = $this->list();
+        self::commandLog('Downloading all proxies', 'comment');
         foreach ($proxies as $proxy) {
-            $this->downloadProxyRevision($proxy['name'], last($proxy['revision']));
+            $revisions = $proxy['revision'];
+            $revision = array_pop($revisions);
+            do {
+                $this->downloadRevision($proxy['name'], $revision);
+                $revision = array_pop($revisions);
+            } while ($allRevisions && $revision);
         }
     }
 
-    public function downloadAllProxiesAllRevisions()
+    public function downloadOnlyDeployedRevisions()
     {
-        $proxies = $this->listProxies();
-        foreach ($proxies as $proxy) {
-            foreach ($proxy['revision'] as $revision)
-                $this->downloadProxyRevision($proxy['name'], $revision);
-        }
-    }
-
-    public function downloadOnlyDeployedProxies()
-    {
-        $proxiesMap = $this->getDeployedProxiesRevisionMap();
+        $proxiesMap = $this->getDeployedRevisionMap();
+        self::commandLog('Downloading only deployed revisions', 'comment');
         foreach ($proxiesMap as $proxy) {
             foreach ($proxy['deployed_revisions'] as $revision) {
-                self::commandLog('Downloading proxy: ' . $proxy['proxy_name'] . ' revision: ' . $revision);
-                $this->downloadProxyRevision($proxy['proxy_name'], $revision, true);
+                $this->downloadRevision($proxy['name'], $revision, true);
             }
         }
     }
@@ -90,7 +86,7 @@ class ProxyService extends ServiceAbstract
      * @return array{proxy_name: string,deployed_revisions: array, deployed_revision_cross_env: array}
      *
      */
-    public function getDeployedProxiesRevisionMap(): array
+    public function getDeployedRevisionMap(): array
     {
         $map = [];
 
@@ -100,14 +96,25 @@ class ProxyService extends ServiceAbstract
             $envName = $environment['name'];
             foreach ($environment['aPIProxy'] as $depProxy) {
                 $proxyName = $depProxy['name'];
-                $map[$proxyName]['proxy_name'] = $proxyName;
+                $map[$proxyName]['name'] = $proxyName;
                 foreach ($depProxy['revision'] as $revision) {
                     $map[$proxyName]['deployed_revisions'][] = $revision['name'];
                     $map[$proxyName]['deployed_revision_cross_env'][$envName][] = $revision['name'];
                 }
             }
         }
+        self::commandLog('Saving Proxy-Deployment-Map', 'comment');
+        file_put_contents($this->storage->proxiesDataPath('Proxy-Deployment-Map.json'), json_encode($map, JSON_PRETTY_PRINT));
         return $map;
+    }
+
+
+    public function exportAll()
+    {
+        $this->exportDeployments();
+        $this->exportData();
+        $this->downloadAll();
+        $this->downloadOnlyDeployedRevisions();
     }
 
 }
