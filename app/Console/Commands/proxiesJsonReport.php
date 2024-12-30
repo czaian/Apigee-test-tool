@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Helpers\Apigee\Services\ReportService;
 use App\Helpers\proxiesReport;
 use Illuminate\Console\Command;
 
@@ -26,7 +27,8 @@ class proxiesJsonReport extends Command
      */
     public function handle()
     {
-        (new proxiesReport($this))->jsonReport();
+//        (new proxiesReport($this))->jsonReport();
+        (new ReportService())->rowFormat();
     }
 
 }

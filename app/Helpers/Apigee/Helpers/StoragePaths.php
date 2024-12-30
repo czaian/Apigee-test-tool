@@ -9,7 +9,7 @@ readonly class StoragePaths
     {
     }
 
-    private function validatePath(string $path = ''): void
+    public function validatePath(string $path = ''): void
     {
         $dirPath = dirname($path);
         if (!is_dir($dirPath)) {
@@ -24,7 +24,7 @@ readonly class StoragePaths
 
         $proxyBundleName = $proxyName . '_revision_' . ($proxyRevision ?? '') . '.zip';
 
-        $fullPath = $folderPath . '/' . ($deployedFolder ? "deployed_proxies/$proxyName" : $proxyName);
+        $fullPath = $folderPath . '/' . ($deployedFolder ? "_deployed_proxies/$proxyName" : $proxyName);
 
         $this->validatePath($fullPath . '/' . $proxyBundleName);
         return $fullPath . '/' . $proxyBundleName;

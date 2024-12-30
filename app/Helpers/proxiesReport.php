@@ -49,7 +49,6 @@ class proxiesReport extends Command
         $content = json_encode(array_values($proxiesListArr), JSON_PRETTY_PRINT);
         file_put_contents($filePath, $content);
         $this->command->info('Data saved to ' . $filePath);
-
     }
 
 
