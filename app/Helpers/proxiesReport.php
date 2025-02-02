@@ -12,7 +12,7 @@ class proxiesReport extends Command
 
     }
 
-    public function jsonReport(): void
+    public function jsonReport($folderEnv): void
     {
         $folderEnv = 'prod';
         $storagePath = storage_path("app/private/$folderEnv");

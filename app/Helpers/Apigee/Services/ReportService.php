@@ -5,6 +5,8 @@ namespace App\Helpers\Apigee\Services;
 use App\Helpers\Apigee\Helpers\Config;
 use App\Helpers\Apigee\Helpers\ConfigEnum;
 use App\Helpers\Apigee\Helpers\StoragePaths;
+use Exception;
+use Illuminate\Support\Arr;
 
 class ReportService
 {
@@ -77,9 +79,14 @@ class ReportService
     }
 
 
-    public function rowFormat($exportPath = null)
+    public function rowFormat($exportPath = null, $exportedFolder = null)
     {
-        $exportPath ??= app_path('Helpers/Apigee/ExportedData/DEV-2024-12-17-13-17-39');
+        if ($exportedFolder) {
+            $exportPath = app_path('Helpers/Apigee/ExportedData/' . $exportedFolder);
+        } elseif (!$exportPath) {
+            throw new Exception('Please provide the path to the exported data');
+        }
+
         $jsonDevelopers = $this->distributionReport($exportPath);
         $rows = [];
         foreach ($jsonDevelopers as $developer) {
@@ -122,6 +129,50 @@ class ReportService
             json_encode($rows, JSON_PRETTY_PRINT)
         );
         return $rows;
+    }
+
+
+    public function jsonReport($exportPath = null, $exportedFolder = null)
+    {
+        if ($exportedFolder) {
+            $exportPath = app_path('Helpers/Apigee/ExportedData/' . $exportedFolder);
+        } elseif (!$exportPath) {
+            throw new Exception('Please provide the path to the exported data');
+        }
+
+        //$this->command->info('start preparing data');
+        $proxiesList = collect(json_decode(file_get_contents($exportPath . "/proxies/data/proxies.json"), 1));
+        $deployments = json_decode(file_get_contents($exportPath . "/proxies/data/deployments.json"), 1);
+        $deployments = collect($deployments['environment']);
+        $envs = $deployments->pluck('name');
+
+        //$this->command->info(count($envs) . ' environments found, (' . implode(",", $envs->toArray()) . ")");
+        //prepare proxy list
+        $proxiesListArr = $proxiesList
+            ->keyBy('name')
+            ->map(function ($proxy) use ($envs) {
+                $proxy = array_merge($proxy, $proxy['metaData']);
+                foreach ($envs as $env)
+                    $proxy[$env . " Deployed Revisions"] = '';
+                unset($proxy['metaData']);
+                $proxy['revision'] = implode(',', $proxy['revision']);
+                return $proxy;
+            })->sortByDesc('lastModifiedAt')->toArray();
+        //$this->command->info(count($proxiesListArr) . ' proxies found');
+        //prepare deployments
+        $deployments = $deployments->map(function ($deployment) use (&$proxiesListArr) {
+            //map environments
+            $env = $deployment['name'];
+            foreach ($deployment['aPIProxy'] as $proxiesDeployment) {
+                $revisions = Arr::pluck($proxiesDeployment['revision'], 'name');
+                $proxiesListArr[$proxiesDeployment['name']][$env . " Deployed Revisions"] = implode(",", $revisions);
+            }
+        });
+        //$this->command->info('Data prepared successfully as json');
+        $filePath = $exportPath . '/Reports/proxiesJsonReport.json';
+        $content = json_encode(array_values($proxiesListArr), JSON_PRETTY_PRINT);
+        file_put_contents($filePath, $content);
+        //$this->command->info('Data saved to ' . $filePath);
     }
 
     public function exportAll()

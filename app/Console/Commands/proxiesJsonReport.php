@@ -13,7 +13,7 @@ class proxiesJsonReport extends Command
      *
      * @var string
      */
-    protected $signature = 'apigee:json-report';
+    protected $signature = 'apigee:json-report {--p|path= : Path to export the report} {--f|folder= : Folder to export the report}';
 
     /**
      * The console command description.
@@ -27,8 +27,9 @@ class proxiesJsonReport extends Command
      */
     public function handle()
     {
-//        (new proxiesReport($this))->jsonReport();
-        (new ReportService())->rowFormat();
+
+        (new ReportService())->rowFormat($this->option('path'), $this->option('folder'));
+        (new ReportService())->jsonReport($this->option('path'), $this->option('folder'));
     }
 
 }

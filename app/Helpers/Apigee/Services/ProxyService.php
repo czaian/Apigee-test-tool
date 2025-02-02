@@ -71,6 +71,16 @@ class ProxyService extends ServiceAbstract
         }
     }
 
+    public function downloadLastRevision(): void
+    {
+        $proxies = $this->list();
+        self::commandLog('Downloading all proxies', 'comment');
+        foreach ($proxies as $proxy) {
+            $revision = last($proxy['revision']);
+                $this->downloadRevision($proxy['name'], $revision);
+        }
+    }
+
     public function downloadOnlyDeployedRevisions()
     {
         $proxiesMap = $this->getDeployedRevisionMap();
